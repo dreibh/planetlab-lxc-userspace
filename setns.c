@@ -101,9 +101,21 @@ static PyMethodDef SetnsMethods[] =
 	{NULL, NULL, 0, NULL}
 };
 
-PyMODINIT_FUNC
+static struct PyModuleDef moduledef = {
+	PyModuleDef_HEAD_INIT,
+	"setns",
+	"http://git.onelab.eu/?p=lxc-userspace.git;a=summary",
+	-1,
+	SetnsMethods,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+};
 
-initsetns(void)
-{
-	(void) Py_InitModule("setns", SetnsMethods);
+PyObject *PyInit_setns(void){
+	PyObject *module = PyModule_Create(&moduledef);
+    if (module == NULL)
+        return NULL;
+	return module;
 }

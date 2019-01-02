@@ -4,7 +4,7 @@ vsh: vsh.c
 	gcc vsh.c -o vsh
 
 setns: setns.c
-	python setup.py build
+	python3 setup.py build
 
 ########## sync
 # for use with the test framework; push local stuff on a test node
@@ -22,7 +22,7 @@ setns: setns.c
 # this will attempt to compile vsh from vsh.c
 # so you might have to yum install gcc
 
-LOCAL_RSYNC_EXCLUDES	:= --exclude '*.pyc' 
+LOCAL_RSYNC_EXCLUDES	:= --exclude '*.pyc'
 RSYNC_EXCLUDES		:= --exclude .git  --exclude .svn --exclude '*~' --exclude TAGS $(LOCAL_RSYNC_EXCLUDES)
 RSYNC_COND_DRY_RUN	:= $(if $(findstring n,$(MAKEFLAGS)),--dry-run,)
 RSYNC			:= rsync -e "ssh -i $(NODE).key.rsa" -a -v $(RSYNC_COND_DRY_RUN) $(RSYNC_EXCLUDES)
@@ -79,4 +79,4 @@ install: setns vsh
 	chmod u+s /usr/sbin/lxcsu
 	chmod u+s /usr/sbin/slicesu
 	chmod u+s /usr/sbin/vsh
-	cp build/lib*/setns.so /usr/sbin
+	cp build/lib*/setns.*.so /usr/sbin/setns.so
