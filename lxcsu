@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import sys
 import os
@@ -26,19 +26,19 @@ def getarch(pid):
 def get_cgroup_subdirs_for_pid(pid):
     cgroup_info_file = '/proc/%s/cgroup'%pid
     cgroup_lines = open(cgroup_info_file).read().splitlines()
-    
+
     subdirs = {}
     for line in cgroup_lines:
         try:
             _, cgroup_name, subdir = line.split(':')
             subdirs[cgroup_name] = subdir
-        except Exception, e:
-            print "Error reading cgroup info: %s"%str(e)
+        except Exception as e:
+            print("Error reading cgroup info: %s"%str(e))
             pass
-    
+
     return subdirs
-        
-    
+
+
 def umount(fs_dir, opts=''):
     output = os.popen('/bin/umount %s %s 2>&1'%(opts, fs_dir)).read()
     return ('device is busy' not in output)
@@ -85,16 +85,16 @@ def main ():
         global debug
 	debug=True
 
-    # somehow some older nodes won't be able to find the login name in /etc/passwd 
+    # somehow some older nodes won't be able to find the login name in /etc/passwd
     # when this is done down the road, so compute slice_uid while in a safe env
-    # even though we don't use the slice_uid any more, this is still 
+    # even though we don't use the slice_uid any more, this is still
     # checked later on as a means to ensure existence of the slice account
     try:
         slice_uid = pwd.getpwnam(slice_name).pw_uid
-    except Exception, e:
+    except Exception as e:
         if debug:
             import traceback
-            print 'error while computing slice_uid',e
+            print('error while computing slice_uid',e)
             traceback.print_exc()
         slice_uid=None
 
@@ -125,14 +125,14 @@ def main ():
         # some should be changed as well
 
     except:
-        print "Domain %s not found"%slice_name
+        print("Domain %s not found"%slice_name)
 	exit(1)
 
     if not driver_pid or not init_pid:
-        print "Domain %s not started"%slice_name
+        print("Domain %s not started"%slice_name)
 	exit(1)
 
-    if debug: print "Found driver_pid",driver_pid,'and init_pid=',init_pid
+    if debug: print("Found driver_pid",driver_pid,'and init_pid=',init_pid)
     # driver_pid is always x86_64, we need to look at the VM's init process here
     arch = getarch(init_pid)
 
@@ -150,7 +150,7 @@ def main ():
 		sysctls.append((sysctl_file, sysctl_name, sysctl_val))
 
     # xxx probably init_pid here too
-    subdirs = get_cgroup_subdirs_for_pid(driver_pid) 
+    subdirs = get_cgroup_subdirs_for_pid(driver_pid)
     sysfs_root = '/sys/fs/cgroup'
 
     # If the slice is frozen, then we'll get an EBUSY when trying to write to the task
@@ -171,12 +171,12 @@ def main ():
                subsystem_comps.reverse()
                subsystem_alt = ','.join(subsystem_comps)
                tasks_path_alt = [sysfs_root, subsystem_alt, subdirs[subsystem], 'tasks']
-            except Exception,e:
+            except Exception as e:
                 pass
-               
+
             tasks_path = [sysfs_root,subsystem,subdirs[subsystem],'tasks']
             tasks_path_str = '/'.join(tasks_path)
-     
+
             try:
                 f = open(tasks_path_str, 'w')
             except:
@@ -187,19 +187,19 @@ def main ():
             if (subsystem=='freezer'):
                 f.close()
 
-        except Exception,e:
-            if (not subdirs.has_key(subsystem)):
+        except Exception as e:
+            if (subsystem not in subdirs):
                 pass
             else:
-                if debug: print e 
-                print "Error assigning cgroup %s (pid=%s) for slice %s"%(current_cgroup,driver_pid, slice_name)
+                if debug: print(e)
+                print("Error assigning cgroup %s (pid=%s) for slice %s"%(current_cgroup,driver_pid, slice_name))
                 exit(1)
 
 
     def chcontext (path):
         retcod = setns.chcontext (path)
         if retcod != 0:
-            print 'WARNING - setns(%s)=>%s (ignored)'%(path,retcod)
+            print('WARNING - setns(%s)=>%s (ignored)'%(path,retcod))
         return retcod
 
     # Use init_pid and not driver_pid to locate reference namespaces
@@ -207,7 +207,7 @@ def main ():
 
     if True:                    chcontext(ref_ns+'uts')
     if True:                    chcontext(ref_ns+'ipc')
-	
+
     if (not args.no_pidns):     chcontext(ref_ns+'pid')
     if (not args.no_netns):     chcontext(ref_ns+'net')
     if (not args.no_mntns):     chcontext(ref_ns+'mnt')
@@ -223,7 +223,7 @@ def main ():
 		os.system('%s -w %s=%s  >/dev/null 2>&1'%(fn, sysctl_name,sysctl_val))
 		break
 	    else:
-		print "Error: image does not have a sysctl binary"
+		print("Error: image does not have a sysctl binary")
 
     # cgroups is not yet LXC-safe, so we need to use the coarse grained access control
     # strategy of unmounting the filesystem
@@ -232,27 +232,27 @@ def main ():
     for subsystem in ['cpuset','cpu,cpuacct','memory','devices','freezer','net_cls','blkio','perf_event','systemd']:
 	fs_path = '/sys/fs/cgroup/%s'%subsystem
 	if (not umount(fs_path,'-l')):
-            print 'WARNING - umount failed (ignored) with path=',fs_path
+            print('WARNING - umount failed (ignored) with path=',fs_path)
 	    pass
 	    # Leaving these comments for historical reference
 	    #print "Error disabling cgroup access"
 	    #exit(1) - Don't need this because failure here implies failure in the call to umount /sys/fs/cgroup
 
     if (not umount('/sys/fs/cgroup')):
-        print "Error disabling cgroup access"
+        print("Error disabling cgroup access")
         exit(1)
 
     fork_pid = os.fork()
 
     if (fork_pid == 0):
         if (not args.root):
-            setns.drop_caps() 
+            setns.drop_caps()
             if (args.nosliceuid):
                 # we still want to drop capabilities, but don't want to switch UIDs
                 exec_args = [arch,'/bin/sh','--login',]+args.command_to_run
             else:
                 if not slice_uid:
-                    print "lxcsu could not spot %s in /etc/passwd - exiting"%slice_name
+                    print("lxcsu could not spot %s in /etc/passwd - exiting"%slice_name)
                     exit(1)
                 exec_args = [arch,'/usr/bin/sudo','-u',slice_name,'/bin/sh','--login',]+args.command_to_run
 # once we can drop f12, it would be nicer to instead go for
@@ -266,7 +266,7 @@ def main ():
         if not args.noslicehome:
             os.environ['HOME'] = '/home/%s'%slice_name
             os.chdir("/home/%s"%(slice_name))
-        if debug: print 'lxcsu:execv:','/usr/bin/setarch',exec_args
+        if debug: print('lxcsu:execv:','/usr/bin/setarch',exec_args)
         os.execv('/usr/bin/setarch',exec_args)
     else:
         setns.proc_umount()
