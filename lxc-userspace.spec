@@ -31,11 +31,11 @@ Obsoletes: lxctools
 %description
 Userspace tools for switching between lxc containers.
 
-%prep 
+%prep
 %setup -q
 
 %build
-make 
+make
 
 %install
 mkdir -p $RPM_BUILD_ROOT/usr/sbin
@@ -43,7 +43,7 @@ install -D -m 755 vsh $RPM_BUILD_ROOT/usr/sbin/vsh
 install -D -m 755 lxcsu $RPM_BUILD_ROOT/usr/sbin/lxcsu
 install -D -m 755 lxcsu-internal $RPM_BUILD_ROOT/usr/sbin/lxcsu-internal
 chmod u+s $RPM_BUILD_ROOT/usr/sbin/lxcsu
-cp build/lib*/setns.so $RPM_BUILD_ROOT/usr/sbin
+cp build/lib*/setns*.so $RPM_BUILD_ROOT/usr/sbin
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -129,4 +129,3 @@ chmod u+s /usr/sbin/vsh
 
 * Fri Feb 22 2013 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - lxctools-0.9-2
 - various fixes
-
