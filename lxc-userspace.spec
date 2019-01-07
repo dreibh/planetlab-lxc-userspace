@@ -1,6 +1,6 @@
 %define name lxc-userspace
-%define version 1.0
-%define taglevel 12
+%define version 2.0
+%define taglevel 0
 
 %define percent %
 %define braop \{
@@ -57,6 +57,9 @@ chmod u+s /usr/sbin/vsh
 %postun
 
 %changelog
+* Mon Jan 07 2019 Thierry <Parmentelat> - lxc-userspace-2.0-0
+- ported to python3, including the setns C extension
+
 * Wed Jul 16 2014 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - lxc-userspace-1.0-12
 - fix lxcsu to spot the right architecture for the container - was always using the host's arch
 
